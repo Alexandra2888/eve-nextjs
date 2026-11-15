@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useEveAgent, type EveMessage, type EveToolPart } from "eve/react";
 import { openInteractions } from "eve/events";
 import { Markdown } from "./markdown";
@@ -16,7 +16,11 @@ const EXAMPLES = [
 ];
 
 export function Chat({ sessionId }: { sessionId?: string }) {
+  // Only live failures. `agent.error` also includes failures replayed from a restored session's
+  // history, which would re-show stale errors every time an old conversation is opened.
+  const [liveError, setLiveError] = useState<Error | null>(null);
   const agent = useEveAgent({
+    onError: (error) => setLiveError(error),
     followAgents: true, // observe specialist + judge child sessions for the trace panel
     ...(sessionId ? { initialSession: { sessionId, streamIndex: 0 }, resume: true } : {}),
     onSessionChange(session) {
@@ -39,7 +43,9 @@ export function Chat({ sessionId }: { sessionId?: string }) {
 
   const submit = (text: string) => {
     const message = text.trim();
-    if (message && !resuming) void agent.send(message);
+    if (!message || resuming) return;
+    setLiveError(null);
+    void agent.send(message);
   };
 
   return (
@@ -66,9 +72,9 @@ export function Chat({ sessionId }: { sessionId?: string }) {
                 <Message key={m.id} message={m} />
               ))}
               {busy && <p className="animate-pulse text-sm text-muted">Orchestrating…</p>}
-              {agent.error && (
+              {liveError && (
                 <p className="rounded-md border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-500">
-                  {agent.error.message}
+                  {liveError.message}
                 </p>
               )}
               {pending.map(({ interactionId, request }) => (
