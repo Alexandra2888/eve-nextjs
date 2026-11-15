@@ -1,26 +1,50 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  --background: #fafafa;
   --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --panel: #ffffff;
+  --border: #e5e5e5;
+  --muted: #737373;
+  --accent: #6d28d9;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --panel: #141414;
+    --border: #262626;
+    --muted: #a3a3a3;
+    --accent: #a78bfa;
   }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-panel: var(--panel);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Markdown output */
+.prose-chat > * + * { margin-top: 0.6rem; }
+.prose-chat pre { overflow-x: auto; border-radius: 0.5rem; border: 1px solid var(--border); background: var(--background); padding: 0.75rem; font-size: 0.8rem; }
+.prose-chat code { font-family: var(--font-geist-mono); font-size: 0.85em; }
+.prose-chat :not(pre) > code { background: var(--border); border-radius: 0.25rem; padding: 0.1rem 0.3rem; }
+.prose-chat ul { list-style: disc; padding-left: 1.25rem; }
+.prose-chat ol { list-style: decimal; padding-left: 1.25rem; }
+.prose-chat h1, .prose-chat h2, .prose-chat h3 { font-weight: 600; }
+.prose-chat a { color: var(--accent); text-decoration: underline; }
+.prose-chat img { border-radius: 0.5rem; max-width: 100%; max-height: 28rem; }
+.prose-chat table { border-collapse: collapse; font-size: 0.85rem; }
+.prose-chat th, .prose-chat td { border: 1px solid var(--border); padding: 0.25rem 0.5rem; }

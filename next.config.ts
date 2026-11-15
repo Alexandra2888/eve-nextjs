@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
+import { withEve } from "eve/next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {
@@ -14,4 +14,5 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Next.js hosts the eve agent: pages → Next.js, /eve/v1/* → the agent in ./agent
+export default withEve(nextConfig);
