@@ -46,6 +46,8 @@ export default defineWorkflowTool({
     const judge = ctx.agent("judge");
     const attempts: Attempt[] = [];
     let message = task;
+    // The judge can only check RAG groundedness if it sees the source material.
+    const reference = specialist === "rag" ? await retrieveReference(task) : undefined;
 
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
       yield { specialist, phase: attempt === 1 ? "working" : "retrying", attempt, attempts: [...attempts] };
@@ -64,7 +66,7 @@ export default defineWorkflowTool({
       // 2. Judge
       yield { specialist, phase: "judging", attempt, attempts: [...attempts] };
       const judged = await judge
-        .send(judgeMessage(specialist, task, output, image), { outputSchema: VerdictSchema, signal: ctx.abortSignal })
+        .send(judgeMessage(specialist, task, output, image, reference), { outputSchema: VerdictSchema, signal: ctx.abortSignal })
         .then((r) => r.result());
       if (judged.status !== "completed" || !judged.data) {
         throw new Error(`judge ${judged.status}: ${judged.error?.message ?? "no verdict"}`);
@@ -101,12 +103,24 @@ export default defineWorkflowTool({
   },
 });
 
-function judgeMessage(specialist: Specialist, request: string, output: string, image?: ImageResult) {
+async function retrieveReference(_task: string) {
+  "use step";
+  // The document is small, so give the judge all of it: a top-k slice can omit the very chunk the
+  // specialist cited and cause false "unsupported claim" verdicts. Switch to searchDocs() for large corpora.
+  const { chunkDocument } = await import("../../lib/rag");
+  const { PROJECT_DOC } = await import("../../lib/rag/document");
+  return chunkDocument(PROJECT_DOC).map((c) => `[${c.id}]\n${c.text}`).join("\n\n");
+}
+
+function judgeMessage(specialist: Specialist, request: string, output: string, image?: ImageResult, reference?: string) {
   const text =
     `Output type: ${specialist}\n` +
     `Rubric: ${RUBRICS[specialist]}\n` +
     `Pass threshold: ${PASS_SCORE}/10\n\n` +
     `<request>\n${request}\n</request>\n\n` +
+    (reference
+      ? `<reference_chunks note="The full project document, split into chunks with their ids. Check every claim and citation in the output against these.">\n${reference}\n</reference_chunks>\n\n`
+      : "") +
     `<output>\n${output}\n</output>` +
     (image && /^https:\/\//.test(image.url) ? "\n\nThe generated image is attached." : "");
 

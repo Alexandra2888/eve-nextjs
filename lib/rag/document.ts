@@ -16,7 +16,9 @@ and returns the result together with an automatic quality review from an AI judg
 - Framework: Next.js 16 (App Router) with React 19 and TypeScript.
 - Agent framework: eve, Vercel's open-source, file-based agent framework. Each agent is a directory;
   tools are TypeScript files and instructions are Markdown.
-- Models are accessed through Vercel AI Gateway, so no provider API keys are stored in the app.
+- Models: Anthropic Claude (Sonnet 5.5 for the orchestrator and text agent, Opus 5.5 for the code agent,
+  Haiku 5.5 for the image and RAG agents) and OpenAI GPT-6 Sol for the judge, called directly with
+  ANTHROPIC_API_KEY and OPENAI_API_KEY. Images use OpenAI gpt-image-2.
 - Styling: Tailwind CSS v4.
 - Image storage: Vercel Blob (falls back to the local public/ folder in development).
 - Hosting: Vercel. eve sessions run durably on Vercel Workflows.
@@ -38,13 +40,13 @@ family than the specialists to reduce self-preference bias.
 
 ## Retrieval (RAG) details
 This document is split into chunks at its level-2 headings. Each chunk is embedded with
-openai/text-embedding-3-small via AI Gateway. Embeddings are cached in memory per server instance.
+OpenAI text-embedding-3-small. Embeddings are cached in memory per server instance.
 At query time the question is embedded and the top 4 chunks are ranked by cosine similarity.
 The RAG agent must cite chunk ids and say when the answer is not in the document.
 
 ## Running locally
 1. Install dependencies with pnpm install (Node 24 or newer is required).
-2. Run pnpm exec eve link to connect a Vercel project and pull environment variables.
+2. Put ANTHROPIC_API_KEY and OPENAI_API_KEY in .env.local (optionally run pnpm exec eve link to connect a Vercel project).
 3. Run pnpm dev to start the Next.js app together with the agent, then open http://localhost:3000.
 4. Run pnpm exec eve dev to chat with the orchestrator in the terminal UI instead.
 
