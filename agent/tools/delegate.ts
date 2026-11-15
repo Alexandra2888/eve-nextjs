@@ -47,7 +47,7 @@ export default defineWorkflowTool({
     const attempts: Attempt[] = [];
     let message = task;
     // The judge can only check RAG groundedness if it sees the source material.
-    const reference = specialist === "rag" ? await retrieveReference(task) : undefined;
+    const reference = specialist === "rag" ? await retrieveReference() : undefined;
 
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
       yield { specialist, phase: attempt === 1 ? "working" : "retrying", attempt, attempts: [...attempts] };
@@ -103,7 +103,7 @@ export default defineWorkflowTool({
   },
 });
 
-async function retrieveReference(_task: string) {
+async function retrieveReference() {
   "use step";
   // The document is small, so give the judge all of it: a top-k slice can omit the very chunk the
   // specialist cited and cause false "unsupported claim" verdicts. Switch to searchDocs() for large corpora.
